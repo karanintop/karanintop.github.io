@@ -1,27 +1,43 @@
-const staticCacheName = 'CacheSpace';
+const CACHE_NAME = 'astrology-cache-v2';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/images/aries.png',
+  '/images/taurus.png',
+  // ... остальные изображения ...
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css'
+];
 
-const assetUrls = [
-  '/index.html', 
-  '/style.css'
-]
-
-self.addEventListener('install', async event => {
-  const cache = await caches.open(staticCacheName)
-  await cache.addAll(assetUrls)
-  console.log('загрузилось')
-  
-})
-
-self.addEventListener('activate', event => {
-  console.log('[SW]: activate')
-})
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        return cache.addAll(urlsToCache);
+      })
+  );
+});
 
 self.addEventListener('fetch', event => {
-  console.log('Fetch', event.request.url)
-  event.respondWith(cacheFirst(event.request))
-})
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        return response || fetch(event.request);
+      })
+  );
+});
 
-async function cacheFirst(request) {
-  const cached = await caches.match(request)
-  return cached ?? await fetch(request)
-}
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (!cacheWhitelist.includes(cacheName)) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
