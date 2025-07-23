@@ -565,6 +565,17 @@
     <button id="installButton">Установить приложение</button>
 
     <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                .then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch(error => {
+                    console.error('Service Worker registration failed:', error);
+                });
+            });
+        }
         // Данные знаков зодиака
         const zodiacSigns = [
             {
@@ -1098,17 +1109,6 @@
             // Обновить активную ссылку
             document.querySelectorAll('nav a').forEach(link => {
                 link.classList.toggle('active', link.dataset.page === pageId);
-            });
-        }
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                .then(registration => {
-                    console.log('Service Worker registered with scope:', registration.scope);
-                })
-                .catch(error => {
-                    console.error('Service Worker registration failed:', error);
-                });
             });
         }
         // Запуск приложения

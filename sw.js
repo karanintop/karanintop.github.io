@@ -1,12 +1,7 @@
 const CACHE_NAME = 'astrology-cache-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/images/aries.png',
-  '/images/taurus.png',
-  // ... остальные изображения ...
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css'
+  'index.html'
+
 ];
 
 self.addEventListener('install', event => {
