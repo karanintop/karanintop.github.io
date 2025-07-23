@@ -354,52 +354,65 @@ function setupNavigation() {
     });
 }
 
-function renderZodiacSigns() {
-    const grid = document.getElementById('zodiacGrid');
-    const detailsContainer = document.getElementById('zodiacDetailsContainer');
+    function renderZodiacSigns() {
+        const grid = document.getElementById('zodiacGrid');
+        const detailsContainer = document.getElementById('zodiacDetailsContainer');
 
-    zodiacSigns.forEach(sign => {
-        // Карточка знака
-        const card = document.createElement('div');
-        card.className = 'zodiac-card';
-        card.innerHTML = `
-            <img src="${sign.image}" alt="${sign.name}" onerror="this.src='https://via.placeholder.com/100?text=${sign.name}'">
-            <h3>${sign.name}</h3>
-            <p>${sign.dates}</p>
-            <p>${sign.element} знак</p>
-        `;
-        card.addEventListener('click', () => showZodiacDetails(sign.id));
-        grid.appendChild(card);
+        // Очищаем контейнеры перед рендерингом
+        grid.innerHTML = '';
+        detailsContainer.innerHTML = '';
 
-        // Детали знака
-        const details = document.createElement('div');
-        details.className = 'zodiac-details';
-        details.id = `details-${sign.id}`;
-        details.innerHTML = `
-            <div class="zodiac-details-header">
-                <img src="${sign.image}" alt="${sign.name}" onerror="this.src='https://via.placeholder.com/120?text=${sign.name}'">
-                <div class="zodiac-details-info">
-                    <h2>${sign.name}</h2>
-                    <p><strong>Даты:</strong> ${sign.dates}</p>
-                    <p><strong>Стихия:</strong> ${sign.element}</p>
-                    <p><strong>Планета:</strong> ${sign.planet}</p>
-                    <p><strong>Камень:</strong> ${sign.stone}</p>
+        // Функция для безопасного создания URL placeholder изображения
+        const getPlaceholderUrl = (text, size = 100) => {
+            const encodedText = encodeURIComponent(text);
+            return `https://via.placeholder.com/${size}?text=${encodedText}`;
+        };
+
+        zodiacSigns.forEach(sign => {
+            // Карточка знака
+            const card = document.createElement('div');
+            card.className = 'zodiac-card';
+            card.innerHTML = `
+                <img src="${sign.image}" alt="${sign.name}" 
+                    onerror="this.src='${getPlaceholderUrl(sign.name)}';this.onerror=null">
+                <h3>${sign.name}</h3>
+                <p>${sign.dates}</p>
+                <p>${sign.element} знак</p>
+            `;
+            card.addEventListener('click', () => showZodiacDetails(sign.id));
+            grid.appendChild(card);
+
+            // Детали знака
+            const details = document.createElement('div');
+            details.className = 'zodiac-details';
+            details.id = `details-${sign.id}`;
+            details.innerHTML = `
+                <div class="zodiac-details-header">
+                    <img src="${sign.image}" alt="${sign.name}" 
+                        onerror="this.src='${getPlaceholderUrl(sign.name, 120)}';this.onerror=null">
+                    <div class="zodiac-details-info">
+                        <h2>${sign.name}</h2>
+                        <p><strong>Даты:</strong> ${sign.dates}</p>
+                        <p><strong>Стихия:</strong> ${sign.element}</p>
+                        <p><strong>Планета:</strong> ${sign.planet}</p>
+                        <p><strong>Камень:</strong> ${sign.stone}</p>
+                    </div>
                 </div>
-            </div>
-            <p>${sign.description}</p>
-            <p><strong>Сильные стороны:</strong> ${sign.strengths}</p>
-            <p><strong>Слабые стороны:</strong> ${sign.weaknesses}</p>
-            <button class="back-button">Назад</button>
-        `;
-        detailsContainer.appendChild(details);
+                <p>${sign.description}</p>
+                <p><strong>Сильные стороны:</strong> ${sign.strengths}</p>
+                <p><strong>Слабые стороны:</strong> ${sign.weaknesses}</p>
+                <button class="back-button">Назад</button>
+            `;
+            detailsContainer.appendChild(details);
 
-        // Кнопка "Назад"
-        details.querySelector('.back-button').addEventListener('click', () => {
-            document.querySelectorAll('.zodiac-details').forEach(d => d.classList.remove('active'));
-            grid.style.display = 'grid';
+            // Кнопка "Назад"
+            details.querySelector('.back-button').addEventListener('click', (e) => {
+                e.stopPropagation();
+                details.classList.remove('active');
+                grid.style.display = 'grid';
+            });
         });
-    });
-
+    }
     // Заполняем таблицу совместимости
     const tableBody = document.querySelector('.compatibility-table tbody');
     zodiacSigns.forEach(sign1 => {
