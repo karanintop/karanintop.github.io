@@ -354,83 +354,133 @@ function setupNavigation() {
     });
 }
 
-    function renderZodiacSigns() {
-        const grid = document.getElementById('zodiacGrid');
-        const detailsContainer = document.getElementById('zodiacDetailsContainer');
+function renderZodiacSigns() {
+    const grid = document.getElementById('zodiacGrid');
+    const detailsContainer = document.getElementById('zodiacDetailsContainer');
 
-        // Очищаем контейнеры перед рендерингом
-        grid.innerHTML = '';
-        detailsContainer.innerHTML = '';
+    // Очищаем контейнеры перед рендерингом
+    grid.innerHTML = '';
+    detailsContainer.innerHTML = '';
 
-        // Функция для безопасного создания URL placeholder изображения
-        const getPlaceholderUrl = (text, size = 100) => {
-            const encodedText = encodeURIComponent(text);
-            return `https://via.placeholder.com/${size}?text=${encodedText}`;
-        };
-
+    // Проверяем доступность placeholder сервиса перед рендерингом
+    checkPlaceholderAvailability().then(isAvailable => {
         zodiacSigns.forEach(sign => {
-            // Карточка знака
-            const card = document.createElement('div');
-            card.className = 'zodiac-card';
-            card.innerHTML = `
-                <img src="${sign.image}" alt="${sign.name}" 
-                    onerror="this.src='${getPlaceholderUrl(sign.name)}';this.onerror=null">
-                <h3>${sign.name}</h3>
-                <p>${sign.dates}</p>
-                <p>${sign.element} знак</p>
-            `;
-            card.addEventListener('click', () => showZodiacDetails(sign.id));
-            grid.appendChild(card);
+            try {
+                // Карточка знака
+                const card = document.createElement('div');
+                card.className = 'zodiac-card';
+                
+                // Создаем изображение заранее для проверки
+                const img = new Image();
+                img.src = sign.image;
+                img.alt = sign.name;
+                
+                img.onerror = () => {
+                    if (!isAvailable) {
+                        console.error(`Пропуск ${sign.name}: изображение и placeholder недоступны`);
+                        return; // Пропускаем этот элемент
+                    }
+                    img.src = getPlaceholderUrl(sign.name);
+                };
 
-            // Детали знака
+                img.onload = () => {
+                    card.innerHTML = `
+                        ${img.outerHTML}
+                        <h3>${sign.name}</h3>
+                        <p>${sign.dates}</p>
+                        <p>${sign.element} знак</p>
+                    `;
+                    card.addEventListener('click', () => showZodiacDetails(sign.id));
+                    grid.appendChild(card);
+                    
+                    // Рендеринг деталей (аналогичная проверка)
+                    renderSignDetails(sign, isAvailable, detailsContainer);
+                };
+
+                // Если изображение сразу не загрузилось
+                if (!img.complete) {
+                    img.dispatchEvent(new Event('error'));
+                }
+
+            } catch (error) {
+                console.error(`Ошибка при рендеринге ${sign.name}:`, error);
+            }
+        });
+    }).catch(error => {
+        console.error('Ошибка проверки placeholder сервиса:', error);
+    });
+
+    // Функция проверки доступности placeholder сервиса
+    async function checkPlaceholderAvailability() {
+        try {
+            const testUrl = 'https://via.placeholder.com/10?text=test';
+            const response = await fetch(testUrl, { mode: 'no-cors' });
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    // Функция рендеринга деталей знака
+    function renderSignDetails(sign, isAvailable, container) {
+        try {
             const details = document.createElement('div');
             details.className = 'zodiac-details';
             details.id = `details-${sign.id}`;
-            details.innerHTML = `
-                <div class="zodiac-details-header">
-                    <img src="${sign.image}" alt="${sign.name}" 
-                        onerror="this.src='${getPlaceholderUrl(sign.name, 120)}';this.onerror=null">
-                    <div class="zodiac-details-info">
-                        <h2>${sign.name}</h2>
-                        <p><strong>Даты:</strong> ${sign.dates}</p>
-                        <p><strong>Стихия:</strong> ${sign.element}</p>
-                        <p><strong>Планета:</strong> ${sign.planet}</p>
-                        <p><strong>Камень:</strong> ${sign.stone}</p>
-                    </div>
-                </div>
-                <p>${sign.description}</p>
-                <p><strong>Сильные стороны:</strong> ${sign.strengths}</p>
-                <p><strong>Слабые стороны:</strong> ${sign.weaknesses}</p>
-                <button class="back-button">Назад</button>
-            `;
-            detailsContainer.appendChild(details);
-
-            // Кнопка "Назад"
-            details.querySelector('.back-button').addEventListener('click', (e) => {
-                e.stopPropagation();
-                details.classList.remove('active');
-                grid.style.display = 'grid';
-            });
-        });
-    }
-    // Заполняем таблицу совместимости
-    const tableBody = document.querySelector('.compatibility-table tbody');
-    zodiacSigns.forEach(sign1 => {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td><strong>${sign1.name}</strong></td>`;
-        
-        zodiacSigns.forEach(sign2 => {
-            const compat = findCompatibility(sign1.id, sign2.id);
-            let className = '';
-            if (compat.percent >= 75) className = 'high';
-            else if (compat.percent >= 60) className = 'medium';
-            else className = 'low';
             
-            row.innerHTML += `<td><span class="compatibility-percentage ${className}">${compat.percent}%</span></td>`;
-        });
-        
-        tableBody.appendChild(row);
-    });
+            const detailImg = new Image();
+            detailImg.src = sign.image;
+            detailImg.alt = sign.name;
+            
+            detailImg.onerror = () => {
+                if (!isAvailable) {
+                    console.error(`Пропуск деталей ${sign.name}: изображение и placeholder недоступны`);
+                    return;
+                }
+                detailImg.src = getPlaceholderUrl(sign.name, 120);
+            };
+            
+            detailImg.onload = () => {
+                details.innerHTML = `
+                    <div class="zodiac-details-header">
+                        ${detailImg.outerHTML}
+                        <div class="zodiac-details-info">
+                            <h2>${sign.name}</h2>
+                            <p><strong>Даты:</strong> ${sign.dates}</p>
+                            <p><strong>Стихия:</strong> ${sign.element}</p>
+                            <p><strong>Планета:</strong> ${sign.planet}</p>
+                            <p><strong>Камень:</strong> ${sign.stone}</p>
+                        </div>
+                    </div>
+                    <p>${sign.description}</p>
+                    <p><strong>Сильные стороны:</strong> ${sign.strengths}</p>
+                    <p><strong>Слабые стороны:</strong> ${sign.weaknesses}</p>
+                    <button class="back-button">Назад</button>
+                `;
+                
+                details.querySelector('.back-button').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    details.classList.remove('active');
+                    grid.style.display = 'grid';
+                });
+                
+                container.appendChild(details);
+            };
+            
+            if (!detailImg.complete) {
+                detailImg.dispatchEvent(new Event('error'));
+            }
+            
+        } catch (error) {
+            console.error(`Ошибка при рендеринге деталей ${sign.name}:`, error);
+        }
+    }
+
+    // Функция для безопасного создания URL placeholder изображения
+    function getPlaceholderUrl(text, size = 100) {
+        const encodedText = encodeURIComponent(text);
+        return `https://via.placeholder.com/${size}?text=${encodedText}`;
+    }
 }
 
 function findCompatibility(sign1Id, sign2Id) {
