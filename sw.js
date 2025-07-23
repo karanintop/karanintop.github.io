@@ -1,38 +1,24 @@
-const CACHE_NAME = 'astrology-cache-v2';
-const urlsToCache = [
-  'index.html'
+const staticCacheName = 's-app-v1';
 
+const assetUrls = [  // Исправлено название
+    'index.html'
 ];
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
-  );
-});
-
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        return response || fetch(event.request);
-      })
-  );
+self.addEventListener('install', async event => {
+    const cache = await caches.open(staticCacheName);
+    await cache.addAll(assetUrls);  // Исправлено название
 });
 
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (!cacheWhitelist.includes(cacheName)) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
+    // Активация (можно добавить логику очистки старых кешей)
 });
+
+self.addEventListener('fetch', event => {
+    console.log('Fetch', event.request.url);
+    event.respondWith(cacheFirst(event.request));
+});
+
+async function cacheFirst(request) {
+    const cached = await caches.match(request);  // Исправлено caches.match
+    return cached ?? await fetch(request);
+}
